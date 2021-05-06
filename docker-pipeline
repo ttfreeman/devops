@@ -1,0 +1,36 @@
+pipeline {
+  agent {
+    kubernetes {
+      //cloud 'kubernetes'
+      defaultContainer 'dind'
+      yaml """
+kind: Pod
+securityContext: 
+  allowPrivilegeEscalation: true
+  runAsUser: 0
+spec:
+  containers:
+    - name: dind
+      image: docker:18.05-dind
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: dind-storage
+          mountPath: /var/lib/docker
+  volumes:
+    - name: dind-storage
+      emptyDir: {}
+"""
+    }
+  }
+  stages {
+    stage('Build with Docker') {
+      steps {
+        git 'https://github.com/ttfreeman/demo-node'
+        sh 'docker version'
+        sh 'docker build -t ttfreeman/demo-node .'
+        sh 'docker images'
+      }
+    }
+  }
+}
